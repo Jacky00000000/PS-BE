@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: ps-be-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ps_be
+      POSTGRES_USER: ps_be
+      POSTGRES_PASSWORD: ps_be
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ps_be -d ps_be"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: ps-be-web
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_HOST: db
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

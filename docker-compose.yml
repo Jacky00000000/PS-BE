@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: ps-be-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ps_be
+      POSTGRES_USER: ps_be
+      POSTGRES_PASSWORD: ps_be
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ps_be -d ps_be"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
