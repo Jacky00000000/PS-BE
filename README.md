@@ -100,11 +100,21 @@ python manage.py runserver
 **提问（POST `/api/chatbot/ask/`）**
 
 ```json
-{ "question": "你是谁？" }
+{
+  "question": "你几多岁？",
+  "history": [
+    { "role": "user", "content": "你叫咩名？" },
+    { "role": "assistant", "content": "我係楊公鵬。" }
+  ]
+}
 ```
 
 - `question`：必填，最长 4000 字符，首尾空白自动去除
+- `history`：可选，当前问题之前的对话记录；每条含 `role`（`user` 或 `assistant`）和 `content`
+- `history` 不应包含当前 `question`（前端发送前一轮及更早的消息即可）
+- 服务端会自动截断过长历史：最多 20 条消息、总字符不超过 12000（优先丢弃最早的消息）
 - 空问题返回 `400 Bad Request`
+- `history` 格式错误返回 `400 Bad Request`
 - DeepSeek API 失败返回 `502 Bad Gateway`
 
 **响应格式（单条记录）**
@@ -124,6 +134,16 @@ python manage.py runserver
 curl -X POST http://127.0.0.1:8000/api/chatbot/ask/ \
   -H "Content-Type: application/json" \
   -d '{"question": "你是谁？"}'
+
+curl -X POST http://127.0.0.1:8000/api/chatbot/ask/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "question": "你几多岁？",
+    "history": [
+      {"role": "user", "content": "你叫咩名？"},
+      {"role": "assistant", "content": "我係楊公鵬。"}
+    ]
+  }'
 ```
 
 ## 环境变量

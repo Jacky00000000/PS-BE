@@ -17,7 +17,10 @@ class AskQuestionView(APIView):
 
         service = ChatbotService()
         try:
-            record = service.ask_question(serializer.validated_data["question"])
+            record = service.ask_question(
+                question=serializer.validated_data["question"],
+                history=serializer.validated_data.get("history") or [],
+            )
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         except DeepSeekAPIError as exc:

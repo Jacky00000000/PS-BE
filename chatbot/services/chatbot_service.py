@@ -8,12 +8,16 @@ class ChatbotService:
     def __init__(self, client: Optional[DeepSeekClient] = None) -> None:
         self._client = client or DeepSeekClient()
 
-    def ask_question(self, question: str) -> ChatbotRecord:
+    def ask_question(
+        self,
+        question: str,
+        history: Optional[list[dict[str, str]]] = None,
+    ) -> ChatbotRecord:
         cleaned_question = question.strip()
         if not cleaned_question:
             raise ValueError("Question cannot be empty.")
 
-        response = self._client.ask(cleaned_question)
+        response = self._client.ask(cleaned_question, history=history or [])
 
         return ChatbotRecord.objects.create(
             question=cleaned_question,
