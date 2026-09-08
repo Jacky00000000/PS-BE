@@ -17,7 +17,7 @@ class AskQuestionSerializer(serializers.Serializer):
     question = serializers.CharField(max_length=MAX_MESSAGE_CONTENT_LENGTH, trim_whitespace=True)
     history = HistoryMessageSerializer(many=True, required=False)
 
-
+#Make class object to json
 class ChatbotRecordSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChatbotRecord

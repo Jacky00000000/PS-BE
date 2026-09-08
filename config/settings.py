@@ -5,7 +5,7 @@ from config.env import BASE_DIR, get_env, get_env_bool, get_env_list
 
 SECRET_KEY = get_env("DJANGO_SECRET_KEY", "django-insecure-dev-only-change-me")
 DEBUG = get_env_bool("DEBUG", default=True)
-ALLOWED_HOSTS = get_env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
+ALLOWED_HOSTS = get_env_list("ALLOWED_HOSTS")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -71,8 +71,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = get_env_list(
-    "CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:5173",
+    "CORS_ALLOWED_ORIGINS"
 )
 CORS_ALLOW_CREDENTIALS = get_env_bool("CORS_ALLOW_CREDENTIALS", default=True)
 

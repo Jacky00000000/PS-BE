@@ -2,7 +2,6 @@ from django.contrib import admin
 
 from chatbot.models import ChatbotRecord
 
-
 @admin.register(ChatbotRecord)
 class ChatbotRecordAdmin(admin.ModelAdmin):
     list_display = ("id", "question_preview", "created_at")
