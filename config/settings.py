@@ -86,7 +86,7 @@ REST_FRAMEWORK = {
 
 # DeepSeek
 DEEPSEEK_API_KEY = get_env("DEEPSEEK_API_KEY", "")
-DEEPSEEK_MODEL = get_env("DEEPSEEK_MODEL", "deepseek-chat")
+DEEPSEEK_MODEL = get_env("DEEPSEEK_MODEL", "deepseek-v4-flash")
 DEEPSEEK_BASE_URL = get_env("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 DEEPSEEK_TIMEOUT = int(get_env("DEEPSEEK_TIMEOUT", "60"))
 

@@ -1,27 +1,27 @@
 from typing import Optional
 
+from chatbot.llm.chains import invoke_chat
+from chatbot.llm.messages import trim_history
 from chatbot.models import ChatbotRecord
-from chatbot.services.deepseek_client import DeepSeekClient
 
 
-class ChatbotService:
-    def __init__(self, client: Optional[DeepSeekClient] = None) -> None:
-        self._client = client or DeepSeekClient()
+class ChatService:
+    def __init__(self, invoke=invoke_chat) -> None:
+        self._invoke = invoke
 
-    def ask_question(
+    def ask(
         self,
         question: str,
         history: Optional[list[dict[str, str]]] = None,
     ) -> ChatbotRecord:
-        cleaned_question = question.strip()
-        if not cleaned_question:
-            raise ValueError("Question cannot be empty.")
-
-        response = self._client.ask(cleaned_question, history=history or [])
+        answer = self._invoke(
+            question,
+            trim_history(history or []),
+        )
 
         return ChatbotRecord.objects.create(
-            question=cleaned_question,
-            answer=response.content,
+            question=question,
+            answer=answer.strip(),
         )
 
     def list_records(self) -> list[ChatbotRecord]:

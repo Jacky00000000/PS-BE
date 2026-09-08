@@ -12,22 +12,24 @@
 ## 系统架构
 
 ```
-Client (HTTP)
+Client tab (HTTP, owns its own chat history)
     ↓
-Views (APIView)          ← chatbot/views.py
+APIView                  ← chatbot/api/views.py
     ↓
 Serializers              ← 请求验证 / 响应序列化
     ↓
-ChatbotService           ← 业务逻辑
+ChatService              ← application use case / database record
     ↓
-DeepSeekClient (httpx)   ← 调用 DeepSeek Chat Completions API
+LangChain chat chain     ← prompt + history + DeepSeek model
     ↓
 ChatbotRecord (PostgreSQL)
 ```
 
-- **Views**：处理 HTTP 请求，返回 JSON
-- **ChatbotService**：校验问题、调用 AI、写入数据库
-- **DeepSeekClient**：携带 `chatbot/prompts.py` 中的 system prompt 发起 API 请求
+- **APIView**：处理 HTTP 请求，返回 JSON
+- **Serializer**：验证请求格式，并确保 history 由 `user` 开始、角色交替
+- **ChatService**：只使用当前 request 的 history 调用 AI，再写入数据库
+- **LangChain chain**：将 system prompt、history 与问题组合后调用 DeepSeek
+- **history**：由浏览器 tab 的 React state 持有；后端不会从 `ChatbotRecord` 读取其他访客历史
 - **config/database.py**：按环境自动切换数据库连接
 
 ## 快速开始
@@ -91,9 +93,6 @@ python manage.py runserver
 | 方法 | 路径 | 说明 | 成功状态码 |
 |------|------|------|-----------|
 | POST | `/api/chatbot/ask/` | 提问并获得 AI 回答 | `201 Created` |
-| GET | `/api/chatbot/records/` | 获取全部问答记录 | `200 OK` |
-| GET | `/api/chatbot/records/<uuid>/` | 获取单条记录 | `200 OK` |
-| DELETE | `/api/chatbot/records/<uuid>/` | 删除单条记录 | `204 No Content` |
 
 ### 请求与响应
 
@@ -112,7 +111,7 @@ python manage.py runserver
 - `question`：必填，最长 4000 字符，首尾空白自动去除
 - `history`：可选，当前问题之前的对话记录；每条含 `role`（`user` 或 `assistant`）和 `content`
 - `history` 不应包含当前 `question`（前端发送前一轮及更早的消息即可）
-- 服务端会自动截断过长历史：最多 20 条消息、总字符不超过 12000（优先丢弃最早的消息）
+- 服务端会自动截断过长历史：最多 20 条消息及约 3,000 tokens（优先丢弃最早的消息）
 - 空问题返回 `400 Bad Request`
 - `history` 格式错误返回 `400 Bad Request`
 - DeepSeek API 失败返回 `502 Bad Gateway`
@@ -165,7 +164,7 @@ curl -X POST http://127.0.0.1:8000/api/chatbot/ask/ \
 | `DATABASE_*_PROD` | Render 生产数据库连接信息 | — |
 | `DATABASE_URL_EXTERNAL_PROD` | Render 外部连接 URL（本机连接用） | — |
 | `DEEPSEEK_API_KEY` | DeepSeek API 密钥 | — |
-| `DEEPSEEK_MODEL` | 模型名称 | `deepseek-chat` |
+| `DEEPSEEK_MODEL` | 模型名称 | `deepseek-v4-flash` |
 | `DEEPSEEK_BASE_URL` | API 地址 | `https://api.deepseek.com` |
 | `DEEPSEEK_TIMEOUT` | 请求超时（秒） | `60` |
 | `CORS_ALLOWED_ORIGINS` | 允许的前端来源（逗号分隔） | `http://localhost:3000,http://localhost:5173` |
@@ -209,13 +208,11 @@ docker compose -f docker-compose.prod.yml up -d --build
 PS-BE/
 ├── chatbot/                  # 聊天机器人 app
 │   ├── models.py             # ChatbotRecord 模型
-│   ├── serializers.py        # 请求验证与响应序列化
-│   ├── prompts.py            # AI 人设 prompt 配置
-│   ├── services/
-│   │   ├── chatbot_service.py    # 业务逻辑
-│   │   └── deepseek_client.py    # DeepSeek API 客户端
-│   ├── views.py              # API 视图
-│   ├── urls.py               # 路由
+│   ├── api/                  # serializers、views、URLs
+│   ├── application/          # ChatService use case
+│   ├── llm/                  # LangChain model、messages、prompt、chain
+│   ├── retrieval/            # 预留给未来 RAG
+│   ├── tools/                # 预留给未来 web search 等 tools
 │   ├── admin.py              # Django Admin 配置
 │   └── migrations/
 ├── config/
