@@ -90,6 +90,20 @@ DEEPSEEK_MODEL = get_env("DEEPSEEK_MODEL", "deepseek-v4-flash")
 DEEPSEEK_BASE_URL = get_env("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 DEEPSEEK_TIMEOUT = int(get_env("DEEPSEEK_TIMEOUT", "60"))
 
+# Web search tool (Tavily)
+TAVILY_API_KEY = get_env("TAVILY_API_KEY", "")
+TAVILY_TIMEOUT = int(get_env("TAVILY_TIMEOUT", "15"))
+CHATBOT_AGENT_TRACE_ENABLED = get_env_bool("CHATBOT_AGENT_TRACE_ENABLED", default=False)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {
+        "chatbot": {"handlers": ["console"], "level": "INFO", "propagate": False},
+    },
+}
+
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True

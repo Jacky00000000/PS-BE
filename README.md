@@ -20,7 +20,7 @@ Serializers              ← 请求验证 / 响应序列化
     ↓
 ChatService              ← application use case / database record
     ↓
-LangChain chat chain     ← prompt + history + DeepSeek model
+LangChain agent          ← prompt + history + DeepSeek model + tools
     ↓
 ChatbotRecord (PostgreSQL)
 ```
@@ -28,9 +28,43 @@ ChatbotRecord (PostgreSQL)
 - **APIView**：处理 HTTP 请求，返回 JSON
 - **Serializer**：验证请求格式，并确保 history 由 `user` 开始、角色交替
 - **ChatService**：只使用当前 request 的 history 调用 AI，再写入数据库
-- **LangChain chain**：将 system prompt、history 与问题组合后调用 DeepSeek
+- **LangChain agent**：将 system prompt、history 与问题组合；模型可按需要调用受限工具
 - **history**：由浏览器 tab 的 React state 持有；后端不会从 `ChatbotRecord` 读取其他访客历史
 - **config/database.py**：按环境自动切换数据库连接
+
+## Web search agent
+
+当问题需要即时资料（例如股价、新闻、赛程或当天事件），DeepSeek 可以选择调用受限的 `web_search` tool。工具使用 Tavily 搜索，并把标题、摘要与 URL 回传给模型生成最终答案；最终答案应列出使用过的来源 URL。
+
+1. 在 [Tavily](https://tavily.com/) 建立 API key。
+2. 在 `.env` 加入：
+
+```env
+TAVILY_API_KEY=tvly-your-key
+```
+
+3. 重启 Django 服务。没有设置 key 时，普通聊天仍可用；需要即时资料的问题会说明 web search 暂不可用。
+
+工具只会从 `chatbot/tools/registry.py` 的 allow-list 执行，且每个提问最多调用三轮工具。新增天气、股票报价或个人资料查询工具时，把 tool 加入该 registry 即可。
+
+每次模型选择工具、工具成功、HTTP 状态错误、连接失败或超时，都会写入 Django server console log；log 不会输出 Tavily API key。
+
+如需查看完整 agent trace（用户问题、模型的 tool call、tool result、来源 URL 与最终答案），在 `.env` 设置：
+
+```env
+CHATBOT_AGENT_TRACE_ENABLED=True
+```
+
+完成排查后改回 `False` 或移除该变量再重启服务。trace 可能包含用户输入和网页摘要，因此生产环境应保持关闭。每个 `POST /ask/` response 也会带有本次工具实际回传的 `sources`：
+
+```json
+{
+  "answer": "...",
+  "sources": [{"id": "S1", "title": "Example", "url": "https://example.com"}]
+}
+```
+
+当 web search 有结果时，模型会在相应事实句后标示 `[S1]`、`[S2]` 等来源编号；后端会在回答结尾固定附上 `### Sources`，列出每个编号对应的标题与 URL。
 
 ## 快速开始
 
@@ -167,6 +201,8 @@ curl -X POST http://127.0.0.1:8000/api/chatbot/ask/ \
 | `DEEPSEEK_MODEL` | 模型名称 | `deepseek-v4-flash` |
 | `DEEPSEEK_BASE_URL` | API 地址 | `https://api.deepseek.com` |
 | `DEEPSEEK_TIMEOUT` | 请求超时（秒） | `60` |
+| `TAVILY_API_KEY` | Tavily web search API key | — |
+| `TAVILY_TIMEOUT` | web search 请求超时（秒） | `15` |
 | `CORS_ALLOWED_ORIGINS` | 允许的前端来源（逗号分隔） | `http://localhost:3000,http://localhost:5173` |
 | `CORS_ALLOW_CREDENTIALS` | 是否允许携带凭证 | `True` |
 
@@ -210,9 +246,9 @@ PS-BE/
 │   ├── models.py             # ChatbotRecord 模型
 │   ├── api/                  # serializers、views、URLs
 │   ├── application/          # ChatService use case
-│   ├── llm/                  # LangChain model、messages、prompt、chain
+│   ├── llm/                  # LangChain model、messages、prompt、agent
 │   ├── retrieval/            # 预留给未来 RAG
-│   ├── tools/                # 预留给未来 web search 等 tools
+│   ├── tools/                # 工具实现与 allow-list（现有 web search）
 │   ├── admin.py              # Django Admin 配置
 │   └── migrations/
 ├── config/

@@ -1,1 +1,1 @@
-"""Reserved for future model tools such as web search."""
+"""LangChain tools the chatbot agent is allowed to execute."""

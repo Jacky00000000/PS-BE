@@ -17,7 +17,7 @@ class AskQuestionView(APIView):
 
         service = self.service_class()
         try:
-            record = service.ask(
+            chat_response = service.ask(
                 question=serializer.validated_data["question"],
                 history=serializer.validated_data.get("history") or [],
             )
@@ -27,7 +27,6 @@ class AskQuestionView(APIView):
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
-        return Response(
-            ChatbotRecordSerializer(record).data,
-            status=status.HTTP_201_CREATED,
-        )
+        data = ChatbotRecordSerializer(chat_response.record).data
+        data["sources"] = chat_response.sources
+        return Response(data, status=status.HTTP_201_CREATED)

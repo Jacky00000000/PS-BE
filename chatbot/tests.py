@@ -3,6 +3,7 @@ from rest_framework.exceptions import ValidationError
 
 from chatbot.api.serializers import AskQuestionSerializer
 from chatbot.application.chat_service import ChatService
+from chatbot.llm.agent import AgentResult
 from chatbot.constants import MAX_HISTORY_MESSAGES
 from chatbot.llm.messages import trim_history
 
@@ -87,13 +88,17 @@ class ChatServiceTests(TestCase):
         def fake_invoke(question, history):
             captured["question"] = question
             captured["history"] = history
-            return "測試答案"
+            return AgentResult(
+                answer="測試答案",
+                sources=[{"id": "S1", "title": "測試來源", "url": "https://example.com"}],
+            )
 
-        record = ChatService(invoke=fake_invoke).ask(
+        response = ChatService(invoke=fake_invoke).ask(
             question="你好嗎？",
             history=[{"role": "user", "content": "之前問題"}],
         )
 
-        self.assertEqual(record.answer, "測試答案")
+        self.assertEqual(response.record.answer, "測試答案")
+        self.assertEqual(response.sources[0]["url"], "https://example.com")
         self.assertEqual(captured["question"], "你好嗎？")
         self.assertEqual(captured["history"][0].content, "之前問題")
