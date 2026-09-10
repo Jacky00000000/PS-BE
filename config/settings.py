@@ -93,7 +93,6 @@ DEEPSEEK_TIMEOUT = int(get_env("DEEPSEEK_TIMEOUT", "60"))
 # Web search tool (Tavily)
 TAVILY_API_KEY = get_env("TAVILY_API_KEY", "")
 TAVILY_TIMEOUT = int(get_env("TAVILY_TIMEOUT", "15"))
-CHATBOT_AGENT_TRACE_ENABLED = get_env_bool("CHATBOT_AGENT_TRACE_ENABLED", default=False)
 
 LOGGING = {
     "version": 1,

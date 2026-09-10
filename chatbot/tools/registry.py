@@ -7,4 +7,8 @@ def get_tools():
 
 
 def get_tool_map():
-    return {tool.name: tool for tool in get_tools()}
+    tool_map = {}
+    for tool in get_tools():
+        tool_map[tool.name] = tool
+
+    return tool_map

@@ -18,5 +18,9 @@ class ChatbotRecord(models.Model):
     #截取问题的前 50 个字符。如果问题超过 50 字则加上省略号，否则不加。返回简短预览文本，让管理员在后台能一眼看出这条记录问了什么。
     def __str__(self) -> str:
         preview = self.question[:50]
-        suffix = "..." if len(self.question) > 50 else ""
+        if len(self.question) > 50:
+            suffix = "..."
+        else:
+            suffix = ""
+
         return f"{preview}{suffix}"

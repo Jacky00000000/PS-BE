@@ -24,4 +24,10 @@ def get_env_bool(key: str, default: bool = False) -> bool:
 
 def get_env_list(key: str, default: str = "") -> List[str]:
     raw = os.getenv(key, default)
-    return [item.strip() for item in raw.split(",") if item.strip()]
+    values = []
+    for item in raw.split(","):
+        stripped_item = item.strip()
+        if stripped_item:
+            values.append(stripped_item)
+
+    return values

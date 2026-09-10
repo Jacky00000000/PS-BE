@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -6,6 +8,8 @@ from rest_framework.views import APIView
 from chatbot.api.serializers import AskQuestionSerializer, ChatbotRecordSerializer
 from chatbot.application.chat_service import ChatService
 from chatbot.llm.exceptions import ChatModelError
+
+logger = logging.getLogger(__name__)
 
 
 class AskQuestionView(APIView):
@@ -22,6 +26,7 @@ class AskQuestionView(APIView):
                 history=serializer.validated_data.get("history") or [],
             )
         except ChatModelError:
+            logger.exception("Chat agent failed while answering /api/chatbot/ask/")
             return Response(
                 {"detail": "The AI service is temporarily unavailable."},
                 status=status.HTTP_502_BAD_GATEWAY,

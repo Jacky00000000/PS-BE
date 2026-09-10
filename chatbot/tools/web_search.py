@@ -54,7 +54,7 @@ def web_search(query: str) -> str:
         {
             "title": item.get("title", "Untitled"),
             "url": item.get("url", ""),
-            "content": item.get("content", "")[:1200],
+            "content": item.get("content", "")[:2000],
         }
         for item in data.get("results", [])
     ]

@@ -24,7 +24,10 @@ class AskQuestionSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     "History must start with a user message and alternate between user and assistant."
                 )
-            expected_role = "assistant" if expected_role == "user" else "user"
+            if expected_role == "user":
+                expected_role = "assistant"
+            else:
+                expected_role = "user"
         return history
 
 #Make class object to json
